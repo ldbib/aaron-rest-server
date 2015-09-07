@@ -4,7 +4,9 @@
   "description": "Aaron REST server",
   "main": "app.js",
   "dependencies": {
-    "connect": "^3.4.0"
+    "loopback": "^2.22.0",
+    "loopback-connector-mysql": "^2.2.0",
+    "loopback-datasource-juggler": "^2.39.0"
   },
   "scripts": {
     "test": "echo \"Achtung!\""
