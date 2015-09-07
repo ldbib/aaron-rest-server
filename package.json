@@ -1,0 +1,21 @@
+{
+  "name": "aaron-rest-server",
+  "version": "0.0.1",
+  "description": "Aaron REST server",
+  "main": "app.js",
+  "dependencies": {
+    "connect": "^3.4.0"
+  },
+  "scripts": {
+    "test": "echo \"Achtung!\""
+  },
+  "keywords": [
+    "aaron",
+    "application",
+    "group",
+    "management"
+  ],
+  "author": "Emil Hemdal",
+  "license": "AGPL-3.0",
+  "private": true
+}
