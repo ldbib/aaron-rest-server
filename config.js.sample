@@ -1,0 +1,27 @@
+
+'use strict';
+
+module.exports = {
+  mysql: {
+    connectionLimit: 10,
+    host:            'localhost',
+    port:            3306,
+    user:            'user',
+    password:        'password',
+    charset:         'utf8_swedish_ci',
+    database:        'database',
+    acquireTimeout:  10000
+  },
+  cookie: {
+    key: 'key',
+    authTime: 7*24*3600,
+    spk: 'spk', // server private key
+    sfp: 'spf' // secret fake password
+  },
+  http: {
+    domain: 'example.com'
+  },
+  r: {
+    email: new RegExp('[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]+', 'i')
+  }
+};

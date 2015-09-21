@@ -2,14 +2,18 @@
   "name": "aaron-rest-server",
   "version": "0.0.1",
   "description": "Aaron REST server",
-  "main": "app.js",
+  "main": "server.js",
   "dependencies": {
-    "loopback": "^2.22.0",
-    "loopback-connector-mysql": "^2.2.0",
-    "loopback-datasource-juggler": "^2.39.0"
+    "bcrypt": "^0.8.5",
+    "body": "^5.1.0",
+    "cookie-signature": "^1.0.6",
+    "mysql": "^2.9.0",
+    "restify": "^4.0.2"
   },
   "scripts": {
-    "test": "echo \"Achtung!\""
+    "test": "npm run jshint && npm run othertests",
+    "jshint": "jshint server.js ./common/* ./routes/*",
+    "othertests": "echo 'Tests not completed!!'"
   },
   "keywords": [
     "aaron",
@@ -19,5 +23,15 @@
   ],
   "author": "Emil Hemdal",
   "license": "AGPL-3.0",
-  "private": true
+  "private": true,
+  "jshintConfig": {
+    "undef": true,
+    "unused": true,
+    "curly": true,
+    "eqeqeq": true,
+    "latedef": true,
+    "nonbsp": true,
+    "nonew": true,
+    "node": true
+  }
 }
