@@ -30,6 +30,7 @@ var hmac      = require('../common/hmac');
 
 var pool = null;
 
+// Function to validate the user information provided via cookie or auth key.
 function checkAuth(req, res, next) {
   authLog('checking auth');
   if(req.cookie && req.cookie.auth) {
@@ -42,7 +43,40 @@ function checkAuth(req, res, next) {
     authLog('auth cookie invalid');
   } else {
     authLog('auth cookie not present, checking arg');
-    //if()
+    if(req.params && req.params.application_shortname &&
+      req.params.application_shortname.length > 0 &&
+      req.params.application_apikey &&
+      req.params.application_apikey.length > 0) {
+
+      // Validate external application via application name, key and an optional IP restriction.
+      authLog('auth arguments avaliable. check ip then validity');
+      pool.getConnection(function(err, connection) {
+        if(err) {
+          console.error(err);
+          return res.send(500, new Error('mysql'));
+        }
+        connection.query('SELECT application_shortname, application_name, application_apikey, application_ipv4, application_ipv6 FROM applications WHERE application_shortname = ?;', [req.params.application_shortname], function(err, rows) {
+          connection.release();
+          if(err) {
+            console.error(err);
+            return res.send(500, new Error('mysql'));
+          }
+          // TODO: FIX IP VALIDATION
+          console.log(req.connection.remoteAddress);
+          if(rows.length === 0) {
+            console.error('AUTH: application does not exist!');
+            return res.send(400, new Error('invalid-credentials'));
+          }
+          if(rows[0].application_apikey === req.params.application_apikey) {
+            return next();
+          }
+          console.error('AUTH: invalid apikey for appication', rows[0].application_shortname);
+          return res.send(400, new Error('invalid-credentials'));
+        });
+      });
+      // Stop further processing to ensure that the query can finish to validate the application and key.
+      return;
+    }
   }
   
   res.send(403, new Error('authenticate-first'));
