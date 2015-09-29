@@ -6,7 +6,6 @@
   "dependencies": {
     "bcrypt": "^0.8.5",
     "body": "^5.1.0",
-    "cookie-signature": "^1.0.6",
     "mysql": "^2.9.0",
     "restify": "^4.0.2"
   },
