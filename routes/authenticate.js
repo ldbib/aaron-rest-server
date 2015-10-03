@@ -24,11 +24,60 @@ var bcrypt    = require('bcrypt');
 var util      = require('util');
 var authLog   = util.debuglog('auth');
 
+var ipAddress = require('ip-address');
+var v6        = ipAddress.v6;
+var v4        = ipAddress.v4;
+
 var config    = require('../config');
 
 var hmac      = require('../common/hmac');
 
 var pool = null;
+
+function validateIP(parsedIP, ips) {
+  if(parsedIP.v4) {
+    if(ips.v4.indexOf(parsedIP.address) !== -1) {
+      return true;
+    }
+  } else {
+    if(ips.v6.indexOf(parsedIP.address) !== -1) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function validateIPAdresses(ip, ips) {
+  var parsedIP;
+  if(ip.indexOf(':') !== -1) {
+    parsedIP = new v6.Address(ip);
+    if(parsedIP.v4) {
+      if(!ips.v4) {
+        return true;
+      }
+      parsedIP = new v4.Address(ip.substr(ip.lastIndexOf(':') + 1));
+      console.log('IP is IPv4 (in IPv6 coding)!');
+    } else {
+      if(!ips.v6) {
+        return true;
+      }
+      console.log('IP is IPv6!');
+    }
+  } else if(ips.v4) {
+    parsedIP = new v4.Address(ip);
+    console.log('IP is IPv4!');
+  } else {
+    return true;
+  }
+
+  if(parsedIP && parsedIP.isValid()) {
+    return validateIP(parsedIP, ips);
+  } else {
+    console.error('AUTH: IP parsing failed. Input IP was ', ip);
+    return false;
+  }
+}
 
 // Function to validate the user information provided via cookie or auth key.
 function checkAuth(req, res, next) {
@@ -61,12 +110,27 @@ function checkAuth(req, res, next) {
             console.error(err);
             return res.send(500, new Error('mysql'));
           }
-          // TODO: FIX IP VALIDATION
-          console.log(req.connection.remoteAddress);
           if(rows.length === 0) {
             console.error('AUTH: application does not exist!');
             return res.send(400, new Error('invalid-credentials'));
           }
+
+          var ips = {v4: null, v6: null};
+
+          if(rows[0].application_ipv4 && rows[0].application_ipv4.length > 0) {
+            ips.v4 = rows[0].application_ipv4.split(',');
+          }
+          if(rows[0].application_ipv6 && rows[0].application_ipv6.length > 0) {
+            ips.v6 = rows[0].application_ipv6.split(',');
+          }
+
+          if(ips.v4 || ips.v6) {
+            if(!validateIPAdresses(req.connection.remoteAddress, ips)) {
+              console.error('IP-address was not in list. IP was: ', req.connection.remoteAddress);
+              return res.send(400, new Error('invalid-credentials'));
+            }
+          }
+
           if(rows[0].application_apikey === req.params.application_apikey) {
             return next();
           }

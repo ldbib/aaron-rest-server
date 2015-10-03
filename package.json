@@ -6,6 +6,7 @@
   "dependencies": {
     "bcrypt": "^0.8.5",
     "body": "^5.1.0",
+    "ip-address": "^4.2.0",
     "mysql": "^2.9.0",
     "restify": "^4.0.2"
   },
