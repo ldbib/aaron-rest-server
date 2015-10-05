@@ -28,6 +28,7 @@ var mysql       = require('mysql');
 var qs          = require('querystring');
 var os          = require('os');
 var util        = require('util');
+var url         = require('url');
 
 var serverLog   = util.debuglog('server');
 
@@ -66,6 +67,13 @@ server.use(function(req, res, next) {
   // TODO check GET arguments
   console.log(req.body);
   serverLog('req.body was', req.body);
+  var parsedURL;
+  if(req.headers.origin) {
+    parsedURL = url.parse(req.headers.origin);
+    if(config.http.acao.indexOf(parsedURL.host) !== -1) {
+      res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
+    }
+  }
   next();
 });
 
