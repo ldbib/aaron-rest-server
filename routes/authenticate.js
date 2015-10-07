@@ -23,6 +23,7 @@ along with Aaron Rest Server.  If not, see <http://www.gnu.org/licenses/>.
 var bcrypt    = require('bcrypt');
 var util      = require('util');
 var authLog   = util.debuglog('auth');
+var url       = require('url');
 
 var ipAddress = require('ip-address');
 var v6        = ipAddress.v6;
@@ -146,6 +147,27 @@ function checkAuth(req, res, next) {
   res.send(403, new Error('authenticate-first'));
 }
 
+function getCookieDomain(req, res, next) {
+  var parsedURL;
+  if(req.headers.origin) {
+    parsedURL = url.parse(req.headers.origin);
+    if(config.http.domains.indexOf(parsedURL.hostname) !== -1) {
+      req.cookieDomain = parsedURL.hostname;
+    }
+  } else if(req.headers.host) {
+    parsedURL = url.parse('//'+req.headers.host, false, true);
+    if(config.http.domains.indexOf(parsedURL.hostname) !== -1) {
+      req.cookieDomain = parsedURL.hostname;
+    }
+    req.cookieDomain = parsedURL.hostname;
+  }
+  if(!req.cookieDomain) {
+    req.cookieDomain = config.http.domains[0]; // Default to first domain.
+  }
+
+  next();
+}
+
 function authenticate(req, res, next) {
   authLog('auth request received!');
   if(!req.params.u || !req.params.p) {
@@ -164,8 +186,15 @@ function authenticate(req, res, next) {
         return res.send(500, new Error('mysql'));
       }
       if(rows.length === 0) {
+        // fakework
         authLog('no user with that e-mail!');
-        return res.send(400, new Error('invalid-credentials'));
+        // garbage collection
+        rows = null;
+        req = null;
+        next = null;
+        return setTimeout(function() {
+          res.send(400, new Error('invalid-credentials'));
+        }, 250);
       }
       bcrypt.compare(req.params.p, rows[0].user_password, function(err, result) {
         if(err) {
@@ -175,7 +204,7 @@ function authenticate(req, res, next) {
         if(result === true) {
           authLog('logging in user with email:', rows[0].user_email);
           var d = new Date(Date.now()+config.cookie.authTime*1000).toUTCString();
-          res.header('Set-Cookie', 'auth='+hmac.user(rows[0].user_email, Math.floor(Date.now()/1000) + config.cookie.authTime)+'; Expires='+d+'; domain='+config.http.domain+'; path=/; HttpOnly');
+          res.header('Set-Cookie', 'auth='+hmac.user(rows[0].user_email, Math.floor(Date.now()/1000) + config.cookie.authTime)+'; Expires='+d+'; domain='+req.cookieDomain+'; path=/; HttpOnly');
           res.send(200, {auth: true});
           return next();
         }
@@ -188,15 +217,15 @@ function authenticate(req, res, next) {
 
 function deAuthenticate(req, res) {
   var d = new Date(0).toUTCString();
-  res.header('Set-Cookie', 'auth=null; Expires='+d+'; domain='+config.http.domain+'; path=/; HttpOnly');
+  res.header('Set-Cookie', 'auth=null; Expires='+d+'; domain='+req.cookieDomain+'; path=/; HttpOnly');
   res.send(200, {deauth: true});
 }
 
 function activateRoute(server, mysqlPool) { // I know auth already! :)
   pool = mysqlPool;
 
-  server.post('/authenticate', authenticate);
-  server.post('/deauthenticate', deAuthenticate);
+  server.post('/authenticate', getCookieDomain, authenticate);
+  server.post('/deauthenticate', getCookieDomain, deAuthenticate);
 }
 
 module.exports.activateRoute = activateRoute;

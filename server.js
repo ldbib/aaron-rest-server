@@ -40,6 +40,7 @@ serverLog('Loading routes!');
 var user        = require('./routes/user');
 var auth        = require('./routes/authenticate');
 var test        = require('./routes/test');
+var perm        = require('./routes/permissions');
 
 
 serverLog('Starting restify server!');
@@ -70,7 +71,7 @@ server.use(function(req, res, next) {
   var parsedURL;
   if(req.headers.origin) {
     parsedURL = url.parse(req.headers.origin);
-    if(config.http.acao.indexOf(parsedURL.host) !== -1) {
+    if(config.http.domains.indexOf(parsedURL.host) !== -1) {
       res.setHeader('Access-Control-Allow-Origin', req.headers.origin);
     }
   }
@@ -81,6 +82,7 @@ serverLog('Activating routes!');
 auth.activateRoute(server, pool); // I know checkAuth already! :)
 user.activateRoute(server, pool, auth.checkAuth);
 test.activateRoute(server, pool, auth.checkAuth);
+perm.activateRoute(server, pool, auth.checkAuth);
 
 server.listen(22766, function() {
   console.log('%s listening at %s', server.name, server.url);

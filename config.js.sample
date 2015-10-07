@@ -38,8 +38,7 @@ module.exports = {
     sfp: 'spf' // secret fake password
   },
   http: {
-    domain: 'example.com',
-    acao: ['example.com'] // Access-Control-Allow-Origin
+    domain: ['example.com', 'example.net'],
   },
   r: {
     email: new RegExp('[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]+', 'i')
