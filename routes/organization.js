@@ -20,39 +20,39 @@ along with Aaron Rest Server.  If not, see <http://www.gnu.org/licenses/>.
 
 'use strict';
 
-var bcrypt    = require('bcrypt');
 var util      = require('util');
 var orgLog    = util.debuglog('org');
 
-var config    = require('../config');
+//var config    = require('../config');
 
 var pool = null;
 
-
-function updateOrganization(req, res, next) {
-  userLog('update request received!');
+function updateOrganization(req, res) {
+  orgLog('update request received!');
   pool.getConnection(function(err, connection) {
-    var updatedPassword = false;
     if(err) {
       console.error(err);
       return res.send(500, new Error('mysql'));
     }
+
+    // TODO: check permissions!
+
     var post = {};
     if(typeof req.params.shortname !== 'string') {
       console.error('updateOrganization: invalid-input-data');
       return res.send(400, new Error('invalid-input-data'));
     }
-    if(typeof body.organization_shortname === 'string') {
-      if(body.organization_shortname.length > 0  && body.organization_shortname.length < 256) {
-        post.organization_shortname = body.organization_shortname;
+    /*if(typeof req.body.organization_shortname === 'string') {
+      if(req.body.organization_shortname.length > 0  && req.body.organization_shortname.length < 256) {
+        post.organization_shortname = req.body.organization_shortname;
       } else {
         console.error('updateOrganization: invalid-input-data, shortname');
         return res.send(400, new Error('invalid-input-data, shortname'));
       }
-    }
-    if(typeof body.organization_name === 'string') {
-      if(body.organization_name.length > 0  && body.organization_name.length < 256) {
-        post.organization_name = body.organization_name;
+    }*/
+    if(typeof req.body.organization_name === 'string') {
+      if(req.body.organization_name.length > 0  && req.body.organization_name.length < 256) {
+        post.organization_name = req.body.organization_name;
       } else {
         console.error('updateOrganization: invalid-input-data, name');
         return res.send(400, new Error('invalid-input-data, name'));
@@ -62,36 +62,43 @@ function updateOrganization(req, res, next) {
       console.error('updateOrganization: invalid-input-data');
       return res.send(400, new Error('no-data-inputted'));
     }
-    function storeData() {
-      var query = connection.query('UPDATE users SET ? WHERE user_email = ? OR user_pemail = ?;', [post, req.params.email, req.params.email], function(err, results) {
+    var query = connection.query(
+      'UPDATE organizations '+
+      'SET ? '+
+      'WHERE organization_name = ?;'
+      , [post, req.params.organization_shortname], function(err, results) {
         connection.release();
         if(err) {
           console.error(err, query.sql);
           return res.send(500, new Error('mysql'));
         }
         console.log(results);
-        res.send(200, {message: 'success'});
-        return next();
-      });
+        return res.send(200, {message: 'success'});
+      }
+    );
+  });
+}
+
+function getMyOrganizations(req, res) {
+  orgLog('update request received!');
+  pool.getConnection(function(err, connection) {
+    if(err) {
+      console.error(err);
+      return res.send(500, new Error('mysql'));
     }
-    if(updatedPassword) {
-      bcrypt.genSalt(11, function(err, salt) {
+    connection.query(
+      'SELECT organization_shortname, organization_name FROM users '+
+      'INNER JOIN users_has_workplaces ON user_id = users_user_id '+
+      'INNER JOIN workplaces ON workplace_id = workplaces_workplace_id '+
+      'INNER JOIN organizations ON organizations_organization_shortname = organization_shortname '+
+      'WHERE user_email = ? OR user_pemail = ?;', [req.authUser, req.authUser], function(err, results) {
         if(err) {
           console.error(err);
-          return res.send(500, new Error('crypto'));
+          return res.send(500, new Error('mysql'));
         }
-        bcrypt.hash(post.user_password, salt, function(err, hash) {
-          if(err) {
-            console.error(err);
-            return res.send(500, new Error('crypto'));
-          }
-          post.user_password = hash;
-          storeData();
-        });
-      });
-    } else {
-      storeData();
-    }
+        res.send(200, results);
+      }
+    );
   });
 }
 
@@ -99,6 +106,7 @@ function updateOrganization(req, res, next) {
 function activateRoute(server, mysqlPool, checkAuth) {
   pool = mysqlPool;
   server.put('/organization/:shortname', checkAuth, updateOrganization);
+  server.get('/organization/for/me', checkAuth, getMyOrganizations);
 }
 
 module.exports.activateRoute = activateRoute;

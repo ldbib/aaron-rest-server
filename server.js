@@ -41,6 +41,7 @@ var user        = require('./routes/user');
 var auth        = require('./routes/authenticate');
 var test        = require('./routes/test');
 var perm        = require('./routes/permissions');
+var orga        = require('./routes/organization');
 
 
 serverLog('Starting restify server!');
@@ -83,6 +84,7 @@ auth.activateRoute(server, pool); // I know checkAuth already! :)
 user.activateRoute(server, pool, auth.checkAuth);
 test.activateRoute(server, pool, auth.checkAuth);
 perm.activateRoute(server, pool, auth.checkAuth);
+orga.activateRoute(server, pool, auth.checkAuth);
 
 server.listen(22766, function() {
   console.log('%s listening at %s', server.name, server.url);
