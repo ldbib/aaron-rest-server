@@ -8,7 +8,8 @@
     "body": "^5.1.0",
     "ip-address": "^4.2.0",
     "mysql": "^2.9.0",
-    "restify": "^4.0.2"
+    "restify": "^4.0.2",
+    "restify-cookies": "^0.1.2"
   },
   "scripts": {
     "test": "npm run jshint && npm run othertests",

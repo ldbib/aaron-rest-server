@@ -83,9 +83,9 @@ function validateIPAdresses(ip, ips) {
 // Function to validate the user information provided via cookie or auth key.
 function checkAuth(req, res, next) {
   authLog('checking auth');
-  if(req.cookie && req.cookie.auth) {
+  if(req.cookies && req.cookies.auth) {
     authLog('auth cookie present');
-    req.authUser = hmac.validateUser(req.cookie.auth);
+    req.authUser = hmac.validateUser(req.cookies.auth);
     if(req.authUser !== false) {
       authLog('auth cookie valid');
       return next();
@@ -221,11 +221,16 @@ function deAuthenticate(req, res) {
   res.send(200, {deauth: true});
 }
 
+function isAuthenticated(req, res) {
+  res.send(200, true);
+}
+
 function activateRoute(server, mysqlPool) { // I know auth already! :)
   pool = mysqlPool;
 
   server.post('/authenticate', getCookieDomain, authenticate);
   server.post('/deauthenticate', getCookieDomain, deAuthenticate);
+  server.get('/authenticated', checkAuth, isAuthenticated);
 }
 
 module.exports.activateRoute = activateRoute;

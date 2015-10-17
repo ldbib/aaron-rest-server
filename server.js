@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 'use strict';
 
 var restify     = require('restify');
+var cp          = require('restify-cookies');
 var mysql       = require('mysql');
 var qs          = require('querystring');
 var os          = require('os');
@@ -50,6 +51,7 @@ var server = restify.createServer();
 server.pre(restify.pre.userAgentConnection()); // Used to make curl return right away with HEAD methods.
 
 server.use(restify.queryParser());
+server.use(cp.parse);
 
 server.use(restify.bodyParser({
   maxBodySize: 0,
@@ -62,13 +64,9 @@ server.use(restify.bodyParser({
 }));
 
 server.use(function(req, res, next) {
-  if(req.headers.cookie) {
-    serverLog('cookie(s) present');
-    req.cookie = qs.parse(req.headers.cookie);
-  }
   // TODO check GET arguments
-  console.log(req.body);
-  serverLog('req.body was', req.body);
+  //console.log(req.body);
+  //serverLog('req.body was', req.body);
   var parsedURL;
   if(req.headers.origin) {
     parsedURL = url.parse(req.headers.origin);
