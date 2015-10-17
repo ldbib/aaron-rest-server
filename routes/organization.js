@@ -80,7 +80,7 @@ function updateOrganization(req, res) {
 }
 
 function getMyOrganizations(req, res) {
-  orgLog('update request received!');
+  orgLog('fetch users organizations received!');
   pool.getConnection(function(err, connection) {
     if(err) {
       console.error(err);
