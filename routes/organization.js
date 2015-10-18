@@ -91,7 +91,27 @@ function getMyOrganizations(req, res) {
       'INNER JOIN users_has_workplaces ON user_id = users_user_id '+
       'INNER JOIN workplaces ON workplace_id = workplaces_workplace_id '+
       'INNER JOIN organizations ON organizations_organization_shortname = organization_shortname '+
-      'WHERE user_email = ? OR user_pemail = ?;', [req.authUser, req.authUser], function(err, results) {
+      'WHERE user_email = ? OR user_pemail = ? '+
+      'ORDER BY organization_name;', [req.authUser, req.authUser], function(err, results) {
+        if(err) {
+          console.error(err);
+          return res.send(500, new Error('mysql'));
+        }
+        res.send(200, results);
+      }
+    );
+  });
+}
+
+function getAllOrganizations(req, res) {
+  orgLog('fetch all organizations received!');
+  pool.getConnection(function(err, connection) {
+    if(err) {
+      console.error(err);
+      return res.send(500, new Error('mysql'));
+    }
+    connection.query(
+      'SELECT organization_shortname, organization_name FROM organizations ORDER BY organization_name;', function(err, results) {
         if(err) {
           console.error(err);
           return res.send(500, new Error('mysql'));
@@ -106,6 +126,7 @@ function getMyOrganizations(req, res) {
 function activateRoute(server, mysqlPool, checkAuth) {
   pool = mysqlPool;
   server.put('/organization/:shortname', checkAuth, updateOrganization);
+  server.get('/organization', getAllOrganizations);
   server.get('/organization/for/me', checkAuth, getMyOrganizations);
 }
 
