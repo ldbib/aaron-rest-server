@@ -93,6 +93,7 @@ function getMyOrganizations(req, res) {
       'INNER JOIN organizations ON organizations_organization_shortname = organization_shortname '+
       'WHERE user_email = ? OR user_pemail = ? '+
       'ORDER BY organization_name;', [req.authUser, req.authUser], function(err, results) {
+        connection.release();
         if(err) {
           console.error(err);
           return res.send(500, new Error('mysql'));
@@ -112,6 +113,7 @@ function getAllOrganizations(req, res) {
     }
     connection.query(
       'SELECT organization_shortname, organization_name FROM organizations ORDER BY organization_name;', function(err, results) {
+        connection.release();
         if(err) {
           console.error(err);
           return res.send(500, new Error('mysql'));
